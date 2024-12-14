@@ -79,7 +79,7 @@ func connect(serverName string) {
 	session.Stdout = os.Stdout
 	session.Stderr = os.Stderr
 	session.Stdin = os.Stdin
-	err = session.RequestPty("xterm", 80, 40, ssh.TerminalModes{
+	err = session.RequestPty("xterm-256color", 80, 40, ssh.TerminalModes{
 		ssh.ECHO:          1,     // Enable echoing
 		ssh.TTY_OP_ISPEED: 14400, // Input speed = 14.4kbaud
 		ssh.TTY_OP_OSPEED: 14400, // Output speed = 14.4kbaud
