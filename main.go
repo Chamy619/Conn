@@ -1,10 +1,12 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"net"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -25,8 +27,28 @@ var (
 	servers    ServerConfig
 )
 
+func getConfigFile() string {
+	var configFile string
+	flag.StringVar(&configFile, "config", "", "Path to the configuration file")
+	flag.Parse()
+	if configFile != "" {
+		return configFile
+	}
+
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		log.Fatalf("Failed to get home directory: %v", err)
+	}
+	if homeDir != "" {
+		configFile = filepath.Join(homeDir, ".config", "conn", "config.yaml")
+		return configFile
+	}
+
+	return "config/config.yaml"
+}
+
 func loadConfig() {
-	data, err := os.ReadFile(configFile)
+	data, err := os.ReadFile(getConfigFile())
 	if err != nil {
 		log.Fatalf("Failed to load config file: %v", err)
 	}
@@ -95,12 +117,15 @@ func connect(serverName string) {
 }
 
 func main() {
-	loadConfig()
-
 	var rootCmd = &cobra.Command{
 		Use:   "conn",
 		Short: "SSH CLI Tool",
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			loadConfig()
+		},
 	}
+
+	rootCmd.PersistentFlags().StringVar(&configFile, "config", "", "Path to the configuration file")
 
 	var connectCmd = &cobra.Command{
 		Use:   "connect [server]",
