@@ -98,11 +98,19 @@ func connect(serverName string) {
 	}
 	defer session.Close()
 
-	session.Stdout = os.Stdout
-	session.Stderr = os.Stderr
-	session.Stdin = os.Stdin
+	// 터미널 상태 저장
+	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
+	if err != nil {
+		log.Fatalf("Failed to set terminal to raw mode: %v", err)
+	}
+	defer func() {
+		if err := term.Restore(int(os.Stdin.Fd()), oldState); err != nil {
+			log.Printf("Failed to restore terminal state: %v", err)
+		}
+	}()
+
 	err = session.RequestPty("xterm-256color", 80, 40, ssh.TerminalModes{
-		ssh.ECHO:          1,     // Enable echoing
+		ssh.ECHO:          1,
 		ssh.TTY_OP_ISPEED: 14400, // Input speed = 14.4kbaud
 		ssh.TTY_OP_OSPEED: 14400, // Output speed = 14.4kbaud
 	})
@@ -110,9 +118,18 @@ func connect(serverName string) {
 		log.Fatalf("Failed to set terminal mode: %v", err)
 	}
 
-	err = session.Run("bash --login -i")
+	session.Stdout = os.Stdout
+	session.Stderr = os.Stderr
+	session.Stdin = os.Stdin
+
+	err = session.Shell()
 	if err != nil {
-		log.Fatalf("Failed to start bash shell: %v", err)
+		log.Fatalf("Failed to start shell: %v", err)
+	}
+
+	err = session.Wait()
+	if err != nil {
+		log.Fatalf("Session ended with error: %v", err)
 	}
 }
 
