@@ -27,6 +27,14 @@ var (
 	servers    ServerConfig
 )
 
+func getTerminalSize() (int, int, error) {
+	width, height, err := term.GetSize(int(os.Stdout.Fd()))
+	if err != nil {
+		return 80, 40, err // 기본값으로 fallback
+	}
+	return width, height, nil
+}
+
 func getConfigFile() string {
 	var configFile string
 	flag.StringVar(&configFile, "config", "", "Path to the configuration file")
@@ -109,7 +117,12 @@ func connect(serverName string) {
 		}
 	}()
 
-	err = session.RequestPty("xterm-256color", 80, 40, ssh.TerminalModes{
+	width, height, err := getTerminalSize()
+	if err != nil {
+		log.Printf("Failed to get terminal size, using default: %v", err)
+	}
+
+	err = session.RequestPty("xterm-256color", height, width, ssh.TerminalModes{
 		ssh.ECHO:          1,
 		ssh.TTY_OP_ISPEED: 14400, // Input speed = 14.4kbaud
 		ssh.TTY_OP_OSPEED: 14400, // Output speed = 14.4kbaud
