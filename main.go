@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"sort"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -171,7 +172,16 @@ func main() {
 		Short: "List all available servers",
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println("Available servers:")
-			for name, server := range servers {
+
+			serverNames := make([]string, 0, len(servers))
+			for name := range servers {
+				serverNames = append(serverNames, name)
+			}
+
+			sort.Strings(serverNames)
+
+			for _, name := range serverNames {
+				server := servers[name]
 				fmt.Printf("- %s (IP: %s, User: %s)\n", name, server.IP, server.User)
 			}
 		},
