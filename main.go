@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -165,6 +166,16 @@ func main() {
 		Run: func(cmd *cobra.Command, args []string) {
 			connect(args[0])
 		},
+		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+			// `toComplete`는 현재 입력된 부분 문자열입니다.
+			suggestions := []string{}
+			for name := range servers {
+				if toComplete == "" || strings.HasPrefix(name, toComplete) {
+					suggestions = append(suggestions, name)
+				}
+			}
+			return suggestions, cobra.ShellCompDirectiveNoFileComp
+		},
 	}
 
 	var listCmd = &cobra.Command{
@@ -187,7 +198,27 @@ func main() {
 		},
 	}
 
-	rootCmd.AddCommand(connectCmd, listCmd)
+	var completionCmd = &cobra.Command{
+		Use:   "completion [bash|zsh]",
+		Short: "Generate completion script",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			switch args[0] {
+			case "bash":
+				if err := rootCmd.GenBashCompletion(os.Stdout); err != nil {
+					log.Fatalf("Failed to generate Bash completion script: %v", err)
+				}
+			case "zsh":
+				if err := rootCmd.GenZshCompletion(os.Stdout); err != nil {
+					log.Fatalf("Failed to generate Zsh completion script: %v", err)
+				}
+			default:
+				fmt.Println("Only bash and zsh are supported.")
+			}
+		},
+	}
+
+	rootCmd.AddCommand(connectCmd, listCmd, completionCmd)
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatalf("Command execution failed: %v", err)
 	}
