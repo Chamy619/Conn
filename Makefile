@@ -66,20 +66,6 @@ completion:
 		echo "지원되지 않는 쉘입니다: $(TERMINAL_SHELL)"; \
 	fi
 
-debug-terminal-shell:
-	@echo "TERMINAL_SHELL: $(TERMINAL_SHELL)"
-
-check-shell:
-	@echo "현재 쉘: $(SHELL)"
-	@CURRENT_SHELL=$$(ps -p $$$$ -o comm=); \
-	if [ "$$CURRENT_SHELL" = "zsh" ]; then \
-		echo "Zsh 환경에서 실행 중입니다."; \
-	elif [ "$$CURRENT_SHELL" = "bash" ]; then \
-		echo "Bash 환경에서 실행 중입니다."; \
-	else \
-		echo "다른 쉘 환경에서 실행 중입니다: $$CURRENT_SHELL"; \
-	fi
-
 # 클린업
 clean:
 	rm -rf $(BUILD_DIR)
