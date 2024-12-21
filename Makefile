@@ -1,3 +1,7 @@
+# 터미널 쉘 확인
+TERMINAL_SHELL := $(or $(MAKE_SHELL),$(shell echo $$SHELL))
+SHELL := $(TERMINAL_SHELL)
+
 # Go 프로젝트 설정
 APP_NAME := conn
 SOURCE := main.go
@@ -40,6 +44,28 @@ copy-config:
 	mkdir -p $(HOME)/.config/$(APP_NAME)
 	cp -r $(CONFIG_DIR)/config.sample.yaml $(HOME)/.config/$(APP_NAME)/config.yaml
 
+# 자동완성 스크립트 생성 및 ~/.zshrc에 추가
+completion:
+	@if [ "$(TERMINAL_SHELL)" = "/bin/zsh" ]; then \
+		echo "Zsh 환경에서 자동완성 스크립트를 생성 중입니다..."; \
+		mkdir -p $(HOME)/.config/$(APP_NAME); \
+		$(BUILD_DIR)/$(APP_NAME) completion zsh > $(HOME)/.config/$(APP_NAME)/completion.zsh; \
+		if ! grep -q "source $(HOME)/.config/$(APP_NAME)/completion.zsh" $(HOME)/.zshrc; then \
+			echo "\n# $(APP_NAME) 자동완성 추가" >> $(HOME)/.zshrc; \
+			echo "source $(HOME)/.config/$(APP_NAME)/completion.zsh" >> $(HOME)/.zshrc; \
+		fi; \
+	elif [ "$(TERMINAL_SHELL)" = "/bin/bash" ]; then \
+		echo "Bash 환경에서 자동완성 스크립트를 생성 중입니다..."; \
+		mkdir -p $(HOME)/.config/$(APP_NAME); \
+		$(BUILD_DIR)/$(APP_NAME) completion bash > $(HOME)/.config/$(APP_NAME)/completion.bash; \
+		if ! grep -q "source $(HOME)/.config/$(APP_NAME)/completion.bash" $(HOME)/.bashrc; then \
+			echo "\n# $(APP_NAME) 자동완성 추가" >> $(HOME)/.bashrc; \
+			echo "source $(HOME)/.config/$(APP_NAME)/completion.bash" >> $(HOME)/.bashrc; \
+		fi; \
+	else \
+		echo "지원되지 않는 쉘입니다: $(TERMINAL_SHELL)"; \
+	fi
+
 # 클린업
 clean:
 	rm -rf $(BUILD_DIR)
@@ -51,5 +77,6 @@ help:
 	@echo "  build-all     - 모든 플랫폼에 대해 크로스 컴파일"
 	@echo "  install       - 빌드된 바이너리를 /usr/local/bin에 설치"
 	@echo "  copy-config   - 설정 파일을 ~/.config/$(APP_NAME)으로 복사"
+	@echo "  completion    - 자동완성 스크립트를 생성하고 ~/.zshrc에 추가"
 	@echo "  clean         - 빌드 파일 삭제"
 	@echo "  help          - 도움말 출력"
