@@ -20,6 +20,7 @@ import (
 type Server struct {
 	IP   string `yaml:"ip"`
 	User string `yaml:"user"`
+	Port int    `yaml:"port"`
 }
 
 type ServerConfig map[string]Server
@@ -86,6 +87,11 @@ func connect(serverName string) {
 
 	password := promptPassword()
 
+	port := server.Port
+	if port == 0 {
+		port = 22
+	}
+
 	config := &ssh.ClientConfig{
 		User:            server.User,
 		Auth:            []ssh.AuthMethod{ssh.Password(password)},
@@ -93,7 +99,7 @@ func connect(serverName string) {
 		Timeout:         5 * time.Second,
 	}
 
-	address := net.JoinHostPort(server.IP, "22")
+	address := net.JoinHostPort(server.IP, fmt.Sprintf("%d", port))
 	client, err := ssh.Dial("tcp", address, config)
 	if err != nil {
 		log.Fatalf("Failed to connect to server %s: %v", serverName, err)
